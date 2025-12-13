@@ -1,3 +1,5 @@
+"use client"
+
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
 
 const data = [
