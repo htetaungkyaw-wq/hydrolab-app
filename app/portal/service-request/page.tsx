@@ -5,10 +5,17 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function ServiceRequestPage() {
   const [status, setStatus] = useState<string | null>(null)
+  const supabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const supabase = createSupabaseBrowserClient()
+    if (!supabase) {
+      setStatus('Supabase is not configured. Please add environment variables.')
+      return
+    }
     const formData = new FormData(event.currentTarget)
     const payload = {
       subject: formData.get('subject'),
@@ -27,20 +34,50 @@ export default function ServiceRequestPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-slate-900">Request Service</h1>
-      <form onSubmit={submit} className="space-y-3 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <form
+        onSubmit={submit}
+        className="space-y-3 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+      >
         <div>
           <label className="text-sm font-semibold text-slate-900">System ID</label>
-          <input name="system_id" required className="mt-1 w-full rounded border px-3 py-2" placeholder="sys-1" />
+          <input
+            name="system_id"
+            required
+            className="mt-1 w-full rounded border px-3 py-2"
+            placeholder="sys-1"
+            disabled={!supabaseConfigured}
+          />
         </div>
         <div>
           <label className="text-sm font-semibold text-slate-900">Subject</label>
-          <input name="subject" required className="mt-1 w-full rounded border px-3 py-2" />
+          <input
+            name="subject"
+            required
+            className="mt-1 w-full rounded border px-3 py-2"
+            disabled={!supabaseConfigured}
+          />
         </div>
         <div>
           <label className="text-sm font-semibold text-slate-900">Description</label>
-          <textarea name="description" rows={4} className="mt-1 w-full rounded border px-3 py-2" />
+          <textarea
+            name="description"
+            rows={4}
+            className="mt-1 w-full rounded border px-3 py-2"
+            disabled={!supabaseConfigured}
+          />
         </div>
-        <button type="submit" className="rounded bg-brand-dark px-4 py-2 text-white">Submit</button>
+        <button
+          type="submit"
+          className="rounded bg-brand-dark px-4 py-2 text-white"
+          disabled={!supabaseConfigured}
+        >
+          Submit
+        </button>
+        <p className="text-sm text-slate-700">
+          {supabaseConfigured
+            ? 'Submit a ticket and our engineers will follow up.'
+            : 'Supabase is not configured. Add environment variables to enable submissions.'}
+        </p>
         {status && <p className="text-sm text-brand-dark">{status}</p>}
       </form>
     </div>
