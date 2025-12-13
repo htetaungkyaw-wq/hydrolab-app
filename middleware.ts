@@ -5,6 +5,20 @@ import { Database } from '@/types/supabase'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const bypassAuth =
+    process.env.DEV_BYPASS_AUTH === 'true' && process.env.NODE_ENV !== 'production'
+
+  if (bypassAuth) {
+    return res
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase environment variables are missing; skipping auth enforcement.')
+    return res
+  }
+
   const supabase = createMiddlewareClient<Database>({ req, res })
   const {
     data: { session },
