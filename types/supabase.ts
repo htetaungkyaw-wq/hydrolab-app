@@ -138,5 +138,9 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['profiles']['Row']>
       }
     }
+    Views: {}
+    Functions: {}
+    Enums: {}
+    CompositeTypes: {}
   }
 }

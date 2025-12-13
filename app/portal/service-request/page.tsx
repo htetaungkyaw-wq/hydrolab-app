@@ -5,10 +5,10 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function ServiceRequestPage() {
   const [status, setStatus] = useState<string | null>(null)
-  const supabase = createSupabaseBrowserClient()
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const supabase = createSupabaseBrowserClient()
     const formData = new FormData(event.currentTarget)
     const payload = {
       subject: formData.get('subject'),
