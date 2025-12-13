@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createSupabaseBrowserClient } from '@/lib/supabase-client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 const leadCategories = ['Residential', 'Commercial', 'Industrial', 'Healthcare', 'Other']
 
