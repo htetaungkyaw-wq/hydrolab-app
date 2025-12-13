@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/supabase'
 
@@ -15,13 +14,13 @@ export default function ContactPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const supabase = createSupabaseBrowserClient()
-    if (!supabase) {
+    const client = createSupabaseBrowserClient()
+    if (!client) {
       setStatus('Supabase is not configured. Please add environment variables.')
       return
     }
     const formData = new FormData(event.currentTarget)
-    const payload: Database['public']['Tables']['leads']['Insert'] = {
+    const payload = {
       name: formData.get('name') as string,
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
@@ -29,8 +28,8 @@ export default function ContactPage() {
       category: formData.get('category') as string,
       message: formData.get('message') as string,
       created_at: new Date().toISOString(),
-    }
-    const { error } = await (supabase as SupabaseClient<Database>).from('leads').insert(payload)
+    } satisfies Database['public']['Tables']['leads']['Insert']
+    const { error } = await client.from('leads').insert(payload as any)
     if (error) {
       setStatus('Unable to save request. Please try again.')
     } else {
