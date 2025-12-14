@@ -37,19 +37,25 @@ function getFilterStatus(filter: SystemWithFilters['system_filters'][number]): {
 
 export default async function PortalOverview() {
   const supabase = createSupabaseServerClient()
+
+  if (!supabase) {
+    return <p className="text-sm text-slate-600">Unable to load portal data.</p>
+  }
   const { data: systems } = await supabase
     .from('systems')
     .select(
       'id, system_type, location, installed_at, system_filters(id, life_days_override, last_changed_at, filter_templates(name, default_life_days))'
     )
     .order('created_at', { ascending: false })
+    .returns<SystemWithFilters[]>()
+  const safeSystems = systems ?? []
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-slate-900">My Systems</h1>
       <div className="grid gap-4 md:grid-cols-2">
-        {systems && systems.length > 0 ? (
-          systems.map((system) => (
+        {safeSystems.length > 0 ? (
+          safeSystems.map((system) => (
             <div
               key={system.id}
               className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
+
 import { Database } from '@/types/supabase'
 
 export async function middleware(req: NextRequest) {
@@ -19,30 +20,54 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  const supabase = createMiddlewareClient<Database>({ req, res })
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach((cookie) =>
+          res.cookies.set(cookie.name, cookie.value, cookie.options)
+        )
+      },
+    },
+  })
+
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const path = req.nextUrl.pathname
   const protect = path.startsWith('/admin') || path.startsWith('/portal')
-  if (protect && !session) {
-    const redirect = req.nextUrl.clone()
-    redirect.pathname = '/'
-    return NextResponse.redirect(redirect)
+
+  if (protect && !user) {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    redirectUrl.searchParams.set('next', path + req.nextUrl.search)
+
+    const redirectResponse = NextResponse.redirect(redirectUrl)
+    res.cookies.getAll().forEach((cookie) =>
+      redirectResponse.cookies.set(cookie)
+    )
+    return redirectResponse
   }
 
-  if (session && path.startsWith('/admin')) {
+  if (user && path.startsWith('/admin')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
 
     if (profile?.role !== 'admin') {
       const redirect = req.nextUrl.clone()
       redirect.pathname = '/'
-      return NextResponse.redirect(redirect)
+
+      const redirectResponse = NextResponse.redirect(redirect)
+      res.cookies.getAll().forEach((cookie) =>
+        redirectResponse.cookies.set(cookie)
+      )
+      return redirectResponse
     }
   }
 

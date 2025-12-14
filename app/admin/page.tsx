@@ -30,6 +30,11 @@ export default function AdminHome() {
   useEffect(() => {
     const supabase = createSupabaseBrowserClient()
 
+    if (!supabase) {
+      console.warn('Supabase client is not configured for admin dashboard.')
+      return
+    }
+
     const fetchCounts = async () => {
       const [{ count: customers }, { count: systems }, { count: openTickets }] = await Promise.all([
         supabase.from('customers').select('*', { count: 'exact', head: true }),

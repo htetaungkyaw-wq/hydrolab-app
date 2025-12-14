@@ -2,9 +2,24 @@ import { NextResponse } from 'next/server'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
+import { Database } from '@/types/supabase'
+
+type SystemReportRow = Database['public']['Tables']['systems']['Row'] & {
+  system_filters: (Database['public']['Tables']['system_filters']['Row'] & {
+    filter_templates: Database['public']['Tables']['filter_templates']['Row'] | null
+  })[] | null
+  maintenance_logs: Database['public']['Tables']['maintenance_logs']['Row'][] | null
+}
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const supabase = createSupabaseServerClient()
+
+  if (!supabase) {
+    return NextResponse.json(
+      { error: 'Server configuration error' },
+      { status: 500 }
+    )
+  }
   const { data: system, error } = await supabase
     .from('systems')
     .select(
@@ -13,20 +28,23 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
         maintenance_logs(performed_at, summary)`
     )
     .eq('id', params.id)
+    .returns<SystemReportRow>()
     .single()
 
   if (error || !system) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const filters = system.system_filters?.map((filter) => ({
+  const systemRecord: SystemReportRow = system
+
+  const filters = systemRecord.system_filters?.map((filter) => ({
     name: filter.filter_templates?.name ?? 'Filter',
     last_changed_at: filter.last_changed_at ?? '',
     default_life_days:
       filter.life_days_override ?? filter.filter_templates?.default_life_days ?? 0,
   }))
 
-  const maintenance = system.maintenance_logs?.map((log) => ({
+  const maintenance = systemRecord.maintenance_logs?.map((log) => ({
     date: log.performed_at ?? '',
     summary: log.summary ?? '',
   }))
@@ -39,11 +57,26 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   let y = height - 50
   page.drawText('HydroLab System Report', { x: 50, y, size: 18, font })
   y -= 30
-  page.drawText(`System: ${system.system_type ?? 'System'}`, { x: 50, y, size: 12, font })
+  page.drawText(`System: ${systemRecord.system_type ?? 'System'}`, {
+    x: 50,
+    y,
+    size: 12,
+    font,
+  })
   y -= 18
-  page.drawText(`Location: ${system.location ?? '—'}`, { x: 50, y, size: 12, font })
+  page.drawText(`Location: ${systemRecord.location ?? '—'}`, {
+    x: 50,
+    y,
+    size: 12,
+    font,
+  })
   y -= 18
-  page.drawText(`Installed: ${formatDate(system.installed_at)}`, { x: 50, y, size: 12, font })
+  page.drawText(`Installed: ${formatDate(systemRecord.installed_at)}`, {
+    x: 50,
+    y,
+    size: 12,
+    font,
+  })
 
   y -= 32
   page.drawText('Filters', { x: 50, y, size: 14, font })
