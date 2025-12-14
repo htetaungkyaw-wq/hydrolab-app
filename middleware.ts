@@ -40,6 +40,8 @@ export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
   const protect = path.startsWith('/admin') || path.startsWith('/portal')
 
+  console.log('[middleware] path=%s user=%s', path, Boolean(user))
+
   if (protect && !user) {
     const redirectUrl = req.nextUrl.clone()
     redirectUrl.pathname = '/login'
@@ -53,11 +55,23 @@ export async function middleware(req: NextRequest) {
   }
 
   if (user && path.startsWith('/admin')) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
+
+    if (profileError) {
+      console.warn('[middleware] profile lookup failed for user %s: %s', user.id, profileError.message)
+      const redirect = req.nextUrl.clone()
+      redirect.pathname = '/'
+
+      const redirectResponse = NextResponse.redirect(redirect)
+      res.cookies.getAll().forEach((cookie) =>
+        redirectResponse.cookies.set(cookie)
+      )
+      return redirectResponse
+    }
 
     if (profile?.role !== 'admin') {
       const redirect = req.nextUrl.clone()
