@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, FormEvent, useMemo, useState } from 'react'
+import { Suspense, FormEvent, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
@@ -13,6 +13,13 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [hostname, setHostname] = useState('')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHostname(window.location.hostname)
+    }
+  }, [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -37,7 +44,12 @@ function LoginForm() {
     }
 
     router.push(redirectTo)
+    router.refresh()
   }
+
+  const supabaseConfigured = Boolean(supabase)
+  const envHasUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const envHasAnonKey = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
@@ -93,6 +105,16 @@ function LoginForm() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
+
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="mt-6 space-y-1 rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+            <p className="font-semibold">Auth debug</p>
+            <p>hostname: {hostname || 'unknown'}</p>
+            <p>supabase client present: {supabaseConfigured ? 'yes' : 'no'}</p>
+            <p>env NEXT_PUBLIC_SUPABASE_URL set: {envHasUrl ? 'yes' : 'no'}</p>
+            <p>env NEXT_PUBLIC_SUPABASE_ANON_KEY set: {envHasAnonKey ? 'yes' : 'no'}</p>
+          </div>
+        )}
       </div>
     </div>
   )
