@@ -1,18 +1,29 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
+import { Database } from '@/types/supabase'
+
+type SystemWithCustomer = Database['public']['Tables']['systems']['Row'] & {
+  customers: Pick<Database['public']['Tables']['customers']['Row'], 'name'> | null
+}
 
 export default async function SystemsPage() {
   const supabase = createSupabaseServerClient()
+
+  if (!supabase) {
+    return <p className="text-sm text-slate-600">Unable to load systems.</p>
+  }
   const { data: systems } = await supabase
     .from('systems')
     .select('id, system_type, flow_rate_lph, location, installed_at, customers(name)')
     .order('created_at', { ascending: false })
+    .returns<SystemWithCustomer[]>()
+  const safeSystems = systems ?? []
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-slate-900">Systems</h1>
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        {systems && systems.length > 0 ? (
+        {safeSystems.length > 0 ? (
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50">
               <tr>
@@ -24,7 +35,7 @@ export default async function SystemsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {systems.map((system) => (
+              {safeSystems.map((system) => (
                 <tr key={system.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {system.customers?.name ?? 'Unknown'}
