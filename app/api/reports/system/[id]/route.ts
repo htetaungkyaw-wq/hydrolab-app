@@ -1,27 +1,35 @@
 import { NextResponse } from 'next/server'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 
-const systemData = {
-  id: 'sys-1',
-  name: 'Commercial RO Drinking Water Factory',
-  location: 'Yangon',
-  installed_at: '2023-06-01',
-  filters: [
-    { name: 'Multimedia', last_changed_at: '2024-05-01', default_life_days: 180 },
-    { name: 'Softener', last_changed_at: '2024-03-15', default_life_days: 365 },
-    { name: 'RO Membrane', last_changed_at: '2024-01-10', default_life_days: 365 },
-  ],
-  maintenance: [
-    { date: '2024-05-01', summary: 'Replaced multimedia media and sanitized pre-treatment' },
-    { date: '2024-03-10', summary: 'Changed cartridge filters and calibrated flowmeters' },
-  ],
-}
-
 export async function GET(_: Request, { params }: { params: { id: string } }) {
-  if (params.id !== systemData.id) {
+  const supabase = createSupabaseServerClient()
+  const { data: system, error } = await supabase
+    .from('systems')
+    .select(
+      `id, system_type, location, installed_at,
+        system_filters(id, last_changed_at, life_days_override, filter_templates(name, default_life_days)),
+        maintenance_logs(performed_at, summary)`
+    )
+    .eq('id', params.id)
+    .single()
+
+  if (error || !system) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
+
+  const filters = system.system_filters?.map((filter) => ({
+    name: filter.filter_templates?.name ?? 'Filter',
+    last_changed_at: filter.last_changed_at ?? '',
+    default_life_days:
+      filter.life_days_override ?? filter.filter_templates?.default_life_days ?? 0,
+  }))
+
+  const maintenance = system.maintenance_logs?.map((log) => ({
+    date: log.performed_at ?? '',
+    summary: log.summary ?? '',
+  }))
 
   const pdfDoc = await PDFDocument.create()
   const page = pdfDoc.addPage([595, 842])
@@ -31,29 +39,32 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   let y = height - 50
   page.drawText('HydroLab System Report', { x: 50, y, size: 18, font })
   y -= 30
-  page.drawText(`System: ${systemData.name}`, { x: 50, y, size: 12, font })
+  page.drawText(`System: ${system.system_type ?? 'System'}`, { x: 50, y, size: 12, font })
   y -= 18
-  page.drawText(`Location: ${systemData.location}`, { x: 50, y, size: 12, font })
+  page.drawText(`Location: ${system.location ?? '—'}`, { x: 50, y, size: 12, font })
   y -= 18
-  page.drawText(`Installed: ${formatDate(systemData.installed_at)}`, { x: 50, y, size: 12, font })
+  page.drawText(`Installed: ${formatDate(system.installed_at)}`, { x: 50, y, size: 12, font })
 
   y -= 32
   page.drawText('Filters', { x: 50, y, size: 14, font })
   y -= 18
-  systemData.filters.forEach((filter) => {
-    page.drawText(`${filter.name} — Last changed ${formatDate(filter.last_changed_at)} — Life ${filter.default_life_days} days`, {
-      x: 50,
-      y,
-      size: 10,
-      font,
-    })
+  filters?.forEach((filter) => {
+    page.drawText(
+      `${filter.name} — Last changed ${formatDate(filter.last_changed_at)} — Life ${filter.default_life_days} days`,
+      {
+        x: 50,
+        y,
+        size: 10,
+        font,
+      }
+    )
     y -= 16
   })
 
   y -= 20
   page.drawText('Maintenance Logs', { x: 50, y, size: 14, font })
   y -= 18
-  systemData.maintenance.forEach((log) => {
+  maintenance?.forEach((log) => {
     page.drawText(`${formatDate(log.date)} — ${log.summary}`, { x: 50, y, size: 10, font })
     y -= 16
   })

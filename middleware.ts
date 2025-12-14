@@ -32,6 +32,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirect)
   }
 
+  if (session && path.startsWith('/admin')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+
+    if (profile?.role !== 'admin') {
+      const redirect = req.nextUrl.clone()
+      redirect.pathname = '/'
+      return NextResponse.redirect(redirect)
+    }
+  }
+
   return res
 }
 
