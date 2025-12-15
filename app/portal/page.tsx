@@ -32,7 +32,7 @@ function getFilterStatus(filter: SystemWithFilters['system_filters'][number]): {
   if (daysLeft <= 0) status = 'OVERDUE'
   else if (daysLeft <= 14) status = 'DUE_SOON'
 
-  return { status, daysLeft }
+  return { status, daysLeft: Math.max(daysLeft, 0) }
 }
 
 export default async function PortalOverview() {
@@ -41,13 +41,21 @@ export default async function PortalOverview() {
   if (!supabase) {
     return <p className="text-sm text-slate-600">Unable to load portal data.</p>
   }
-  const { data: systems } = await supabase
+  const { data: systems, error } = await supabase
     .from('systems')
     .select(
       'id, system_type, location, installed_at, system_filters(id, life_days_override, last_changed_at, filter_templates(name, default_life_days))'
     )
     .order('created_at', { ascending: false })
     .returns<SystemWithFilters[]>()
+
+  if (error) {
+    return (
+      <p className="text-sm text-red-700">
+        Unable to load systems at this time: {error.message}
+      </p>
+    )
+  }
   const safeSystems = systems ?? []
 
   return (
