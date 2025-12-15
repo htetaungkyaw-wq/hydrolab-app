@@ -7,7 +7,14 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('next') || '/admin'
+  const redirectTo = useMemo(() => {
+    const nextParam = searchParams.get('next')?.trim()
+
+    if (!nextParam) return '/admin'
+    if (!nextParam.startsWith('/') || nextParam.startsWith('//')) return '/admin'
+
+    return nextParam
+  }, [searchParams])
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
