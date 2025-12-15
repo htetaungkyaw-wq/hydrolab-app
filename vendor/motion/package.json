@@ -1,0 +1,10 @@
+{
+  "name": "motion",
+  "version": "11.17.0",
+  "main": "index.js",
+  "exports": {
+    "./react": "./react.js",
+    ".": "./index.js"
+  },
+  "type": "commonjs"
+}
