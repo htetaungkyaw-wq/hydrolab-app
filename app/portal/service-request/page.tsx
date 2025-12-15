@@ -2,6 +2,12 @@
 
 import { useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
+import { Database } from '@/types/supabase'
+
+type TicketInsert = Pick<
+  Database['public']['Tables']['maintenance_tickets']['Insert'],
+  'subject' | 'description' | 'status' | 'system_id'
+>
 
 export default function ServiceRequestPage() {
   const [status, setStatus] = useState<string | null>(null)
@@ -11,24 +17,45 @@ export default function ServiceRequestPage() {
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const formElement = event.currentTarget
     const supabase = createSupabaseBrowserClient()
     if (!supabase) {
       setStatus('Supabase is not configured. Please add environment variables.')
       return
     }
-    const formData = new FormData(event.currentTarget)
-    const payload = {
-      subject: formData.get('subject'),
-      description: formData.get('description'),
+    const formData = new FormData(formElement)
+    const systemId = formData.get('system_id')
+    const subject = formData.get('subject')
+    const description = formData.get('description')
+
+    if (typeof systemId !== 'string' || !systemId.trim()) {
+      setStatus('Please provide a system ID.')
+      return
+    }
+
+    if (typeof subject !== 'string' || !subject.trim()) {
+      setStatus('Please provide a subject for your request.')
+      return
+    }
+
+    const payload: TicketInsert = {
+      subject: subject.trim(),
+      description:
+        typeof description === 'string' && description.trim().length > 0
+          ? description.trim()
+          : null,
       status: 'open',
-      system_id: formData.get('system_id'),
+      system_id: systemId.trim(),
     }
-    const { error } = await supabase.from('maintenance_tickets').insert(payload as any)
-    if (error) setStatus('Failed to submit ticket. Please try again.')
-    else {
-      setStatus('Ticket submitted. Our engineers will get in touch.')
-      event.currentTarget.reset()
+
+    const { error } = await supabase.from('maintenance_tickets').insert(payload)
+    if (error) {
+      setStatus(`Failed to submit ticket: ${error.message}`)
+      return
     }
+
+    setStatus('Ticket submitted. Our engineers will get in touch.')
+    formElement.reset()
   }
 
   return (
