@@ -36,15 +36,25 @@ export const projects = [
   },
 ]
 
-export const products = [
+export type Product = {
+  title: string
+  detail: string
+  category?: string
+  capacity?: string
+  range?: string
+}
+
+export const products: Product[] = [
   {
     title: 'UF Systems',
     detail: 'Ultra-filtration trains designed for robust pre-treatment and standalone polishing.',
+    category: 'Filtration',
   },
   {
     title: 'IR Series (IR1/IR2/IR3)',
     detail:
       'Removes dissolved iron, odor, color, and sediment with 3–7 step trains sized to iron load and flow rate.',
+    category: 'Iron Removal',
   },
 ]
 
