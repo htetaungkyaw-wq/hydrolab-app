@@ -67,14 +67,18 @@ export default function FilterTemplatesAdminPage() {
     if (!form.name || !String(form.name).trim()) return toast({ type: 'error', message: 'Name is required.' })
     const payload = {
       name: String(form.name).trim(),
-      default_life_days: form.default_life_days === null || form.default_life_days === undefined || form.default_life_days === '' ? null : Number(form.default_life_days),
-      stage_order: form.stage_order === null || form.stage_order === undefined || form.stage_order === '' ? null : Number(form.stage_order),
+      default_life_days: form.default_life_days === null || form.default_life_days === undefined ? null : Number(form.default_life_days),
+      stage_order: form.stage_order === null || form.stage_order === undefined ? null : Number(form.stage_order),
     }
     if (editing) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the update payload.
       const { error } = await supabase.from('filter_templates').update(payload).eq('id', editing.id)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'Template updated.' })
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the insert payload.
       const { error } = await supabase.from('filter_templates').insert(payload)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'Template created.' })
@@ -122,11 +126,19 @@ export default function FilterTemplatesAdminPage() {
           </div>
           <div>
             <label className="text-xs text-slate-400">Order</label>
-            <Input type="number" value={form.stage_order === null || form.stage_order === undefined ? '' : String(form.stage_order)} onChange={(e) => setForm((p) => ({ ...p, stage_order: e.target.value }))} />
+            <Input
+              type="number"
+              value={form.stage_order === null || form.stage_order === undefined ? '' : String(form.stage_order)}
+              onChange={(e) => setForm((p) => ({ ...p, stage_order: e.target.value === '' ? null : Number(e.target.value) }))}
+            />
           </div>
           <div className="sm:col-span-3">
             <label className="text-xs text-slate-400">Default Life (days)</label>
-            <Input type="number" value={form.default_life_days === null || form.default_life_days === undefined ? '' : String(form.default_life_days)} onChange={(e) => setForm((p) => ({ ...p, default_life_days: e.target.value }))} />
+            <Input
+              type="number"
+              value={form.default_life_days === null || form.default_life_days === undefined ? '' : String(form.default_life_days)}
+              onChange={(e) => setForm((p) => ({ ...p, default_life_days: e.target.value === '' ? null : Number(e.target.value) }))}
+            />
           </div>
         </div>
       </Modal>

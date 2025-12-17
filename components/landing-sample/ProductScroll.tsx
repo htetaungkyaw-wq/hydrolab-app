@@ -1,4 +1,4 @@
-import { products, type Product } from '@/lib/content'
+import { products } from '@/lib/content'
 
 export function ProductScroll() {
   return (
@@ -14,8 +14,9 @@ export function ProductScroll() {
         </div>
         <div className="overflow-x-auto pb-4 hide-scrollbar">
           <div className="flex min-w-full gap-4">
-            {products.map((product: Product) => {
-              const label = product.capacity ?? product.range ?? product.category ?? 'HydroLab System'
+            {products.map((product) => {
+              const enriched = product as { capacity?: string; range?: string; category?: string }
+              const label = enriched.capacity ?? enriched.range ?? enriched.category ?? 'HydroLab System'
               return (
                 <article
                   key={product.title}
