@@ -2,26 +2,16 @@ import { projects } from '@/lib/content'
 
 export default function ProjectsPage() {
   return (
-    <section className="min-h-screen bg-[#0f172a] py-16 text-slate-100">
-      <div className="container space-y-6">
-        <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#38bdf8]">Projects</p>
-          <h1 className="text-4xl font-semibold text-white">Proven deployments across industries</h1>
-          <p className="max-w-3xl text-slate-200/80">
-            From hospitality and healthcare to heavy industry, HydroLab designs resilient treatment trains that keep
-            critical operations running.
-          </p>
-        </div>
+    <section className="section">
+      <div className="container space-y-4">
+        <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
         <div className="grid gap-4 md:grid-cols-3">
           {projects.map((project) => (
-            <article
-              key={project.title}
-              className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg transition hover:-translate-y-1 hover:border-[#38bdf8]/50 hover:shadow-cyan-500/10 backdrop-blur"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#38bdf8]">{project.flow_rate}</p>
-              <h3 className="mt-3 text-xl font-semibold text-white">{project.title}</h3>
-              <p className="mt-2 text-sm text-slate-100/80">{project.description}</p>
-            </article>
+            <div key={project.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <h3 className="font-semibold text-slate-900">{project.title}</h3>
+              <p className="text-sm text-slate-700">{project.description}</p>
+              <p className="mt-2 text-xs uppercase tracking-wide text-brand-dark">{project.flow_rate}</p>
+            </div>
           ))}
         </div>
       </div>

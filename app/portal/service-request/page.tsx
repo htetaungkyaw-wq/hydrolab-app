@@ -4,6 +4,11 @@ import { useState } from 'react'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { Database } from '@/types/supabase'
 
+type TicketInsert = Pick<
+  Database['public']['Tables']['maintenance_tickets']['Insert'],
+  'subject' | 'description' | 'status' | 'system_id'
+>
+
 export default function ServiceRequestPage() {
   const [status, setStatus] = useState<string | null>(null)
   const supabaseConfigured = Boolean(
@@ -13,18 +18,9 @@ export default function ServiceRequestPage() {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formElement = event.currentTarget
-    const supabaseClient = createSupabaseBrowserClient()
-    if (!supabaseClient) {
+    const supabase = createSupabaseBrowserClient()
+    if (!supabase) {
       setStatus('Supabase is not configured. Please add environment variables.')
-      return
-    }
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser()
-
-    if (userError || !user) {
-      setStatus('Unable to verify your session. Please sign in again and retry.')
       return
     }
     const formData = new FormData(formElement)
@@ -42,7 +38,7 @@ export default function ServiceRequestPage() {
       return
     }
 
-    const payload: Database['public']['Tables']['maintenance_tickets']['Insert'] = {
+    const payload: TicketInsert = {
       subject: subject.trim(),
       description:
         typeof description === 'string' && description.trim().length > 0
@@ -50,14 +46,9 @@ export default function ServiceRequestPage() {
           : null,
       status: 'open',
       system_id: systemId.trim(),
-      customer_id: user.id,
-      created_at: null,
-      updated_at: null,
     }
 
-    const { error } = await supabaseClient
-      .from('maintenance_tickets')
-      .insert(payload as any)
+    const { error } = await supabase.from('maintenance_tickets').insert(payload)
     if (error) {
       setStatus(`Failed to submit ticket: ${error.message}`)
       return

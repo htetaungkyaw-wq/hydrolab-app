@@ -4,7 +4,7 @@ import type { Database } from '@/types/supabase'
 
 let hasLoggedMissingEnv = false
 
-export function createSupabaseBrowserClient(): SupabaseClient<Database, 'public'> | null {
+export function createSupabaseBrowserClient(): SupabaseClient<Database> | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -18,8 +18,5 @@ export function createSupabaseBrowserClient(): SupabaseClient<Database, 'public'
     return null
   }
 
-  return createBrowserClient<Database, 'public'>(
-    supabaseUrl,
-    supabaseAnonKey
-  )
+  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
 }
