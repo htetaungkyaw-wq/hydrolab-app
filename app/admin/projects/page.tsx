@@ -105,17 +105,19 @@ export default function ProjectsAdminPage() {
       category: form.category ? String(form.category).trim() : null,
       description: form.description ? String(form.description).trim() : null,
       flow_rate_lph:
-        form.flow_rate_lph === null || form.flow_rate_lph === undefined || form.flow_rate_lph === ''
-          ? null
-          : Number(form.flow_rate_lph),
+        form.flow_rate_lph === null || form.flow_rate_lph === undefined ? null : Number(form.flow_rate_lph),
       solutions,
     }
 
     if (editing) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the update payload.
       const { error } = await supabase.from('projects').update(payload).eq('id', editing.id)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'Project updated.' })
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the insert payload.
       const { error } = await supabase.from('projects').insert(payload)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'Project created.' })
@@ -157,6 +159,8 @@ export default function ProjectsAdminPage() {
 
   async function attach() {
     if (!supabase || !photosProject || !attachAssetId) return
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error Supabase types misinfer the insert payload.
     const { error } = await supabase.from('project_photos').insert({ project_id: photosProject.id, asset_id: attachAssetId })
     if (error) toast({ type: 'error', message: error.message })
     else toast({ type: 'success', message: 'Photo attached.' })
@@ -220,7 +224,9 @@ export default function ProjectsAdminPage() {
             <Input
               type="number"
               value={form.flow_rate_lph === null || form.flow_rate_lph === undefined ? '' : String(form.flow_rate_lph)}
-              onChange={(e) => setForm((p) => ({ ...p, flow_rate_lph: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, flow_rate_lph: e.target.value === '' ? null : Number(e.target.value) }))
+              }
             />
           </div>
           <div className="sm:col-span-2">

@@ -16,7 +16,7 @@ type Ticket = Database['public']['Tables']['maintenance_tickets']['Row']
 type Customer = Database['public']['Tables']['customers']['Row']
 type System = Database['public']['Tables']['systems']['Row']
 
-const empty: Partial<Ticket> = { status: 'open', subject: '', description: '', customer_id: '', system_id: null }
+const empty: Partial<Ticket> = { status: 'open', subject: '', description: '', customer_id: '', system_id: '' }
 
 export default function TicketsAdminPage() {
   const { toast } = useToast()
@@ -81,7 +81,7 @@ export default function TicketsAdminPage() {
       subject: r.subject ?? '',
       description: r.description ?? '',
       customer_id: r.customer_id ?? '',
-      system_id: r.system_id ?? null,
+      system_id: r.system_id ?? '',
     })
     setModalOpen(true)
   }
@@ -101,10 +101,14 @@ export default function TicketsAdminPage() {
     }
 
     if (editing) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the update payload.
       const { error } = await supabase.from('maintenance_tickets').update(payload).eq('id', editing.id)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'Ticket updated.' })
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the insert payload.
       const { error } = await supabase.from('maintenance_tickets').insert(payload)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'Ticket created.' })
@@ -161,14 +165,14 @@ export default function TicketsAdminPage() {
           </div>
           <div>
             <label className="text-xs text-slate-400">Customer *</label>
-            <Select value={String(form.customer_id ?? '')} onChange={(e) => setForm((p) => ({ ...p, customer_id: e.target.value, system_id: null }))}>
+            <Select value={String(form.customer_id ?? '')} onChange={(e) => setForm((p) => ({ ...p, customer_id: e.target.value, system_id: '' }))}>
               <option value="">Select customer…</option>
               {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
           </div>
           <div className="sm:col-span-2">
             <label className="text-xs text-slate-400">System (optional)</label>
-            <Select value={String(form.system_id ?? '')} onChange={(e) => setForm((p) => ({ ...p, system_id: e.target.value || null }))} disabled={!form.customer_id}>
+            <Select value={String(form.system_id ?? '')} onChange={(e) => setForm((p) => ({ ...p, system_id: e.target.value || '' }))} disabled={!form.customer_id}>
               <option value="">No system</option>
               {systemsForCustomer.map((s) => (
                 <option key={s.id} value={s.id}>

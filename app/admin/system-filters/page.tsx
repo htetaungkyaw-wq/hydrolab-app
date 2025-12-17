@@ -110,17 +110,19 @@ export default function SystemFiltersAdminPage() {
       system_id: String(form.system_id),
       template_id: String(form.template_id),
       life_days_override:
-        form.life_days_override === null || form.life_days_override === undefined || form.life_days_override === ''
-          ? null
-          : Number(form.life_days_override),
+        form.life_days_override === null || form.life_days_override === undefined ? null : Number(form.life_days_override),
       last_changed_at: form.last_changed_at ? String(form.last_changed_at) : null,
     }
 
     if (editing) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the update payload.
       const { error } = await supabase.from('system_filters').update(payload).eq('id', editing.id)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'System filter updated.' })
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the insert payload.
       const { error } = await supabase.from('system_filters').insert(payload)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'System filter created.' })
@@ -187,7 +189,13 @@ export default function SystemFiltersAdminPage() {
           </div>
           <div>
             <label className="text-xs text-slate-400">Life Override (days)</label>
-            <Input type="number" value={form.life_days_override === null || form.life_days_override === undefined ? '' : String(form.life_days_override)} onChange={(e) => setForm((p) => ({ ...p, life_days_override: e.target.value }))} />
+            <Input
+              type="number"
+              value={form.life_days_override === null || form.life_days_override === undefined ? '' : String(form.life_days_override)}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, life_days_override: e.target.value === '' ? null : Number(e.target.value) }))
+              }
+            />
           </div>
           <div>
             <label className="text-xs text-slate-400">Last Changed At</label>

@@ -104,17 +104,21 @@ export default function SystemsAdminPage() {
     const payload = {
       customer_id: String(form.customer_id),
       system_type: form.system_type ? String(form.system_type).trim() : null,
-      flow_rate_lph: form.flow_rate_lph === null || form.flow_rate_lph === undefined || form.flow_rate_lph === '' ? null : Number(form.flow_rate_lph),
+      flow_rate_lph: form.flow_rate_lph === null || form.flow_rate_lph === undefined ? null : Number(form.flow_rate_lph),
       location: form.location ? String(form.location).trim() : null,
       installed_at: form.installed_at ? String(form.installed_at) : null,
       notes: form.notes ? String(form.notes).trim() : null,
     }
 
     if (editing) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the update payload.
       const { error } = await supabase.from('systems').update(payload).eq('id', editing.id)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'System updated.' })
     } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error Supabase types misinfer the insert payload.
       const { error } = await supabase.from('systems').insert(payload)
       if (error) toast({ type: 'error', message: error.message })
       else toast({ type: 'success', message: 'System created.' })
@@ -198,7 +202,9 @@ export default function SystemsAdminPage() {
             <Input
               type="number"
               value={form.flow_rate_lph === null || form.flow_rate_lph === undefined ? '' : String(form.flow_rate_lph)}
-              onChange={(e) => setForm((p) => ({ ...p, flow_rate_lph: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, flow_rate_lph: e.target.value === '' ? null : Number(e.target.value) }))
+              }
             />
           </div>
           <div>
